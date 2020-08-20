@@ -174,7 +174,9 @@ def plot_match(peaks1,peaks2,frag_1,matches,confirmed_matches,relative=True,pred
     plt.plot([], [],'bo', label='Unconfirmed Match')
     plt.plot([], [], 'ro', label='Incorrect Match')
     plt.legend()
-    plt.xlim([0,1])
+    plt.ylabel('Time Drift')
+    plt.xlabel('Time of Observation')
+    #plt.xlim([0,1])
     if not relative:
         plt.ylim([0,1])
     return peaks1, peaks2, predictions
