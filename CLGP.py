@@ -232,6 +232,9 @@ class SimpleExperiment(object):
             matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
                                     max_rt=self.max_rt, predictions=None)
             truth = assess_matches(matches, self.dataset1_idx, self.dataset2_idx)
+            print('Initial matches based on no time drift and picking the closest matches.')
+            print('For the figure below, there is a total of {} matches, of which there are {} correct and {} '
+                  'incorrect.'.format(len(truth), sum(truth), len(truth) - sum(truth)))
             self.plot_figure(matches, confirmed_matches, truth, None)
             for it in range(self.n_its):
                 queried_points, confirmed_matches = self.update(queried_points, confirmed_matches)
@@ -240,11 +243,15 @@ class SimpleExperiment(object):
         unqueried = set(range(len(self.dataset1))) - set(queried_points)
         new_match = query(self.dataset1_idx, self.dataset2_idx, np.random.choice(list(unqueried)), self.frag_1)
         if new_match is not None and new_match not in confirmed_matches:
+            print('The next query resulted in a new confirmed match. The GP has been refitted and the matching updated.')
             confirmed_matches.append(new_match)
         pred_mu = fit_and_predict(self.dataset1, self.dataset2, confirmed_matches, self.main_K)
         matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
                                 max_rt=self.max_rt, predictions=pred_mu)
         truth = assess_matches(matches, self.dataset1_idx, self.dataset2_idx)
+        print('For the figure below, there are now a total of {} matches, of which there are {} confirmed, {} '
+              'unconfirmed and {} incorrect.'.format(len(truth), len(confirmed_matches), sum(truth) -
+                                                     len(confirmed_matches), len(truth) - sum(truth)))
         self.plot_figure(matches, confirmed_matches, truth, pred_mu)
         return queried_points, confirmed_matches
 

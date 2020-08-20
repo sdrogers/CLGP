@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3efdb6c3-c508-4f09-bd11-204b0e3fe60a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/CLGP.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/InitialTest.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/InitialTest.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SimplestAgain.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/SimplestAgain.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLGP.py" beforeDir="false" afterPath="$PROJECT_DIR$/CLGP.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLMSSimpleExample.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/CLMSSimpleExample.ipynb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -17,8 +16,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/CLGP.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="802">
-              <caret line="179" column="38" selection-start-line="179" selection-start-column="38" selection-end-line="179" selection-end-column="38" />
+            <state relative-caret-position="568">
+              <caret line="245" column="114" selection-start-line="245" selection-start-column="114" selection-end-line="245" selection-end-column="114" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -124,8 +123,8 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/CLGP.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="802">
-          <caret line="179" column="38" selection-start-line="179" selection-start-column="38" selection-end-line="179" selection-end-column="38" />
+        <state relative-caret-position="568">
+          <caret line="245" column="114" selection-start-line="245" selection-start-column="114" selection-end-line="245" selection-end-column="114" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
