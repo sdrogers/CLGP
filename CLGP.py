@@ -258,7 +258,7 @@ class SimpleExperiment(object):
     def plot_figure(self, matches, confirmed_matches, truth, pred_mu):
         plt.figure(figsize=(15, 5))
         plt.subplot(1, 2, 1)
-        plt.plot(self.true_vals, -self.true_offset_function, label='True Drift')
+        plt.plot(self.true_vals + self.true_offset_function, -self.true_offset_function, label='True Drift')
         plot_match(self.dataset1, self.dataset2, self.frag_1, matches, confirmed_matches, relative=True,
                    predictions=pred_mu, truth=truth)
         plt.subplot(1, 2, 2)
