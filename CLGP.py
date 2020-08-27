@@ -26,7 +26,7 @@ def add_frag_events(n_data, frag_prob_1):
     return frag_1
 
 
-def plot_frag_dataset(true_vals, data_idx, frag_1, col='g'):
+def plot_frag_dataset(true_vals, data_idx, frag_1):
     plt.xlabel('Time of Observation')
     plt.ylabel('Observation Index')
     for i, idx in enumerate(data_idx):
@@ -34,9 +34,9 @@ def plot_frag_dataset(true_vals, data_idx, frag_1, col='g'):
             m = 'x'
         else:
             m = 'o'
-        plt.scatter(true_vals[idx], idx, marker=m, c=col)
-    plt.plot([], [], 'gx', label='Object with Additional Information')
-    plt.plot([], [], 'go', label='Object with no Additional Information')
+        plt.scatter(true_vals[idx], idx, marker=m, c='b')
+    plt.plot([], [], 'bx', label='Object with Additional Information')
+    plt.plot([], [], 'bo', label='Object with no Additional Information')
     plt.legend()
     plt.show()
 
@@ -66,8 +66,7 @@ def plot_datasets(dataset1, dataset2, dataset1_idx, dataset2_idx, true_matching=
                   confirmed_matches=None, figsize=None):
     if figsize is not None:
         plt.figure(figsize=figsize)
-    plt.plot(dataset1, dataset1_idx, 'go', label='dataset1')
-    plt.plot(dataset2, dataset2_idx, 'ko', label='dataset2')
+
     plt.xlabel('Time of Observation')
     plt.ylabel('Observation Index')
     if true_matching:
@@ -77,19 +76,21 @@ def plot_datasets(dataset1, dataset2, dataset1_idx, dataset2_idx, true_matching=
             if idx in dataset1_idx and idx in dataset2_idx:
                 plt.plot([dataset1[dataset1_idx == idx], dataset2[dataset2_idx == idx]], [idx,idx], 'k')
     if matches is not None:
-        plt.plot([], [], 'b', label="Confirmed Matches")
-        plt.plot([], [], 'b--', label="Unconfirmed Matches")
-        plt.plot([], [], 'r', label="Incorrect Matches")
+        plt.plot([], [], 'g', label="Confirmed Matches", linewidth=3)
+        plt.plot([], [], 'orange', label="Unconfirmed Matches", linewidth=3)
+        plt.plot([], [], 'r', label="Incorrect Matches", linewidth=3)
         for m in matches:
             if confirmed_matches is not None and m in confirmed_matches:
                 # this is a confirmed match
-                plt.plot([dataset1[m[0]], dataset2[m[1]]],[dataset1_idx[m[0]], dataset2_idx[m[1]]], 'b')
+                plt.plot([dataset1[m[0]], dataset2[m[1]]],[dataset1_idx[m[0]], dataset2_idx[m[1]]], 'g', linewidth=3)
             elif dataset1_idx[m[0]] == dataset2_idx[m[1]]:
                 # this is a correct, but unconfirmed match
-                plt.plot([dataset1[m[0]], dataset2[m[1]]],[dataset1_idx[m[0]], dataset2_idx[m[1]]], 'b--')
+                plt.plot([dataset1[m[0]], dataset2[m[1]]],[dataset1_idx[m[0]], dataset2_idx[m[1]]], 'orange', linewidth=3)
             else:
                 # incorrect match
-                plt.plot([dataset1[m[0]], dataset2[m[1]]],[dataset1_idx[m[0]], dataset2_idx[m[1]]], 'r')
+                plt.plot([dataset1[m[0]], dataset2[m[1]]],[dataset1_idx[m[0]], dataset2_idx[m[1]]], 'r', linewidth=3)
+    plt.plot(dataset1, dataset1_idx, 'bo', label='dataset1')
+    plt.plot(dataset2, dataset2_idx, 'ko', label='dataset2')
     plt.legend(loc='lower right', prop={"size":12})
 
 
@@ -133,35 +134,37 @@ def closest_match(peaks1, peaks2, confirmed_matches, queried_points, frag_1, max
     return matches
 
 
-def plot_match(peaks1,peaks2,frag_1,matches,confirmed_matches,relative=True,predictions = None,truth=None):
+def plot_match(peaks1, peaks2, frag_1, matches, confirmed_matches, relative=True, predictions=None, truth=None):
     # plt.figure()
     if not relative:
-        plt.plot(peaks2,np.zeros_like(peaks2),'ro')
-        plt.plot(np.zeros_like(peaks1),peaks1,'ro')
+        plt.plot(peaks2, np.zeros_like(peaks2), 'ro')
+        plt.plot(np.zeros_like(peaks1), peaks1, 'ro')
         p1 = []
         for i,f in enumerate(frag_1):
             if f == 1:
                 p1.append(peaks1[i])
         plt.plot(np.zeros_like(p1),p1,'ko')
 
-    for a,(i,j) in enumerate(matches):
-        col = 'ro' # default
+    for a, (i, j) in enumerate(matches):
+        col = 'ro'  # default
         if truth is not None:
             if truth[a] == 1:
-                col = 'bo' # match is correct, so make it blue
-        if (i,j) in confirmed_matches: # if this is a confirmed one
+                col = 'go'  # match is correct, so make it blue
+        if (i,j) in confirmed_matches:  # if this is a confirmed one
             if not relative:
-                plt.plot(peaks2[j],peaks1[i],col,markersize=15)
+                plt.plot(peaks2[j], peaks1[i], col, markersize=15)
             else: # plotting difference not absolute time
-                plt.plot(peaks2[j],peaks1[i]-peaks2[j],col,markersize=15)
+                plt.plot(peaks2[j], peaks1[i]-peaks2[j], col, markersize=15)
                 if predictions is not None:
-                    plt.plot(peaks2[j],predictions[j],'ko',markersize=3) # plot a point where the current model prediction is
-                    plt.plot([peaks2[j],peaks2[j]],[predictions[j],peaks1[i]-peaks2[j]],'k',color=[0.8,0.8,0.8])
+                    plt.plot(peaks2[j], predictions[j],'ko', markersize=3)  # plot a point where the current model prediction is
+                    plt.plot([peaks2[j], peaks2[j]],[predictions[j],peaks1[i]-peaks2[j]],'k',color=[0.8,0.8,0.8])
         else:
+            if col == 'go':
+                col = 'orange'
             if not relative:
-                plt.plot(peaks2[j],peaks1[i],col)
+                plt.plot(peaks2[j],peaks1[i],col,marker='o')
             else:
-                plt.plot(peaks2[j],peaks1[i]-peaks2[j],col)
+                plt.plot(peaks2[j],peaks1[i]-peaks2[j],col,marker='o')
                 if not predictions is None:
                     plt.plot(peaks2[j],predictions[j],'ko',markersize=3)
                     plt.plot([peaks2[j],peaks2[j]],[predictions[j],peaks1[i]-peaks2[j]],'k',color=[0.8,0.8,0.8])
@@ -169,10 +172,10 @@ def plot_match(peaks1,peaks2,frag_1,matches,confirmed_matches,relative=True,pred
             plt.plot([peaks2[j],peaks2[j]],[0,peaks1[i]],'k',color=[0.8,0.8,0.8])
             plt.plot([0,peaks2[j]],[peaks1[i],peaks1[i]],'k',color=[0.8,0.8,0.8])
     if predictions is not None:
-        plt.plot(peaks2, predictions, label='Predicted Drift')
-    plt.plot([], [], 'bo', markersize=15, label='Confirmed Match')
-    plt.plot([], [],'bo', label='Unconfirmed Match')
-    plt.plot([], [], 'ro', label='Incorrect Match')
+        plt.plot(peaks2, predictions, c='C0', label='Predicted Drift')
+    plt.plot([], [], 'go', markersize=15, label='Confirmed Match')
+    plt.plot([], [], 'o', c='orange', markersize=7, label='Unconfirmed Match')
+    plt.plot([], [], 'ro', markersize=7, label='Incorrect Match')
     plt.legend()
     plt.ylabel('Time Drift')
     plt.xlabel('Time of Observation')
@@ -260,7 +263,7 @@ class SimpleExperiment(object):
     def plot_figure(self, matches, confirmed_matches, truth, pred_mu):
         plt.figure(figsize=(15, 5))
         plt.subplot(1, 2, 1)
-        plt.plot(self.true_vals + self.true_offset_function, -self.true_offset_function, label='True Drift')
+        plt.plot(self.true_vals + self.true_offset_function, -self.true_offset_function, 'k', label='True Drift')
         plot_match(self.dataset1, self.dataset2, self.frag_1, matches, confirmed_matches, relative=True,
                    predictions=pred_mu, truth=truth)
         plt.subplot(1, 2, 2)
