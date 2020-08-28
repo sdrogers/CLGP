@@ -247,10 +247,12 @@ class SimpleExperiment(object):
                 queried_points, confirmed_matches = self.update(queried_points, confirmed_matches)
 
     def update(self, queried_points, confirmed_matches):
-        new_match = self.get_new_match(queried_points, confirmed_matches)
+        new_match, queried_points = self.get_new_match(queried_points, confirmed_matches)
         if new_match is not None and new_match not in confirmed_matches:
             print('The next query resulted in a new confirmed match. The GP has been refitted and the matching updated.')
             confirmed_matches.append(new_match)
+        else:
+            print('The next query did not match anything previously observed.')
         pred_mu = fit_and_predict(self.dataset1, self.dataset2, confirmed_matches, self.main_K)
         matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
                                 max_rt=self.max_rt, predictions=pred_mu)
@@ -262,23 +264,26 @@ class SimpleExperiment(object):
         return queried_points, confirmed_matches
 
     def get_new_match(self, queried_points, confirmed_matches):
+        unqueried = set(range(len(self.dataset2))) - set(queried_points)
         if self.match_method in ['max_drift', 'max_drift_weighted']:
             pred_mu = fit_and_predict(self.dataset1, self.dataset2, confirmed_matches, self.main_K)
             matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
                                     max_rt=self.max_rt, predictions=pred_mu)
-            dists = np.array([-1.0 for m in matches])
+            dists = []
+            dist_idx = []
             for a, (i, j) in enumerate(matches):
-                dists[a] = abs(pred_mu[j] - (self.dataset1[i] - self.dataset2[j]))[0]
-            assert all(dists >= 0)
+                if j not in queried_points:
+                    dists.append(abs(pred_mu[j] - (self.dataset1[i] - self.dataset2[j]))[0])
+                    dist_idx.append(j)
             if self.match_method == 'max_drift':
-                match_selection = dists.argmax()
+                match_selection = np.array(dist_idx)[np.array(dists).argmax()]
             else:
                 match_selection = random.choices(range(len(dists)), weights=dists)[0]
         else:
-            unqueried = set(range(len(self.dataset1))) - set(queried_points)
             match_selection = np.random.choice(list(unqueried))
+        queried_points.append(match_selection)
         new_match = query(self.dataset1_idx, self.dataset2_idx, match_selection, self.frag_1)
-        return new_match
+        return new_match, queried_points
 
     def plot_figure(self, matches, confirmed_matches, truth, pred_mu):
         plt.figure(figsize=(15, 5))
