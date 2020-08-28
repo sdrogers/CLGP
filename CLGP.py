@@ -2,6 +2,7 @@ import numpy as np
 import pylab as plt
 import copy
 import warnings
+import random
 
 
 def create_dataset(N, n_data):
@@ -216,8 +217,8 @@ def fit_and_predict(peaks1,peaks2,confirmed_matches,main_K):
 
 
 class SimpleExperiment(object):
-    def __init__(self, n_its, dataset1, dataset2, dataset1_idx, dataset2_idx, frag_1, main_K, max_rt=0.02, true_vals=None,
-                 true_offset_function=None):
+    def __init__(self, n_its, dataset1, dataset2, dataset1_idx, dataset2_idx, frag_1, main_K, match_method=None,
+                 max_rt=0.02, true_vals=None, true_offset_function=None):
         self.n_its = n_its
         self.dataset1 = dataset1
         self.dataset2 = dataset2
@@ -225,6 +226,7 @@ class SimpleExperiment(object):
         self.dataset2_idx = dataset2_idx
         self.frag_1 = frag_1
         self.main_K = main_K
+        self.match_method = match_method
         self.max_rt = max_rt
         self.true_vals = true_vals
         self.true_offset_function = true_offset_function
@@ -245,8 +247,7 @@ class SimpleExperiment(object):
                 queried_points, confirmed_matches = self.update(queried_points, confirmed_matches)
 
     def update(self, queried_points, confirmed_matches):
-        unqueried = set(range(len(self.dataset1))) - set(queried_points)
-        new_match = query(self.dataset1_idx, self.dataset2_idx, np.random.choice(list(unqueried)), self.frag_1)
+        new_match = self.get_new_match(queried_points, confirmed_matches)
         if new_match is not None and new_match not in confirmed_matches:
             print('The next query resulted in a new confirmed match. The GP has been refitted and the matching updated.')
             confirmed_matches.append(new_match)
@@ -259,6 +260,25 @@ class SimpleExperiment(object):
                                                      len(confirmed_matches), len(truth) - sum(truth)))
         self.plot_figure(matches, confirmed_matches, truth, pred_mu)
         return queried_points, confirmed_matches
+
+    def get_new_match(self, queried_points, confirmed_matches):
+        if self.match_method in ['max_drift', 'max_drift_weighted']:
+            pred_mu = fit_and_predict(self.dataset1, self.dataset2, confirmed_matches, self.main_K)
+            matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
+                                    max_rt=self.max_rt, predictions=pred_mu)
+            dists = np.array([-1.0 for m in matches])
+            for a, (i, j) in enumerate(matches):
+                dists[a] = abs(pred_mu[j] - (self.dataset1[i] - self.dataset2[j]))[0]
+            assert all(dists >= 0)
+            if self.match_method == 'max_drift':
+                match_selection = dists.argmax()
+            else:
+                match_selection = random.choices(range(len(dists)), weights=dists)[0]
+        else:
+            unqueried = set(range(len(self.dataset1))) - set(queried_points)
+            match_selection = np.random.choice(list(unqueried))
+        new_match = query(self.dataset1_idx, self.dataset2_idx, match_selection, self.frag_1)
+        return new_match
 
     def plot_figure(self, matches, confirmed_matches, truth, pred_mu):
         plt.figure(figsize=(15, 5))
