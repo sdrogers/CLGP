@@ -305,3 +305,26 @@ class SimpleExperiment(object):
                       matches=matches, confirmed_matches=confirmed_matches)
         plt.show()
 
+
+class ExampleExperiment(SimpleExperiment):
+    def __init__(self, dataset1, dataset2, dataset1_idx, dataset2_idx, frag_1, main_K, max_rt=0.02,
+                 true_vals=None, true_offset_function=None):
+        super().__init__(1, dataset1, dataset2, dataset1_idx, dataset2_idx, frag_1, main_K, 'cheat', max_rt, true_vals,
+                         true_offset_function)
+
+    def run(self):
+        confirmed_matches = []  # these are the points that will be used for training
+        queried_points = []  # store which points we have queried
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
+                                    max_rt=self.max_rt, predictions=None)
+            truth = assess_matches(matches, self.dataset1_idx, self.dataset2_idx)
+            print('Initial matches based on no time drift and picking the closest matches.')
+            print('For the figure below, there is a total of {} matches, of which there are {} correct and {} '
+                  'incorrect.'.format(len(truth), sum(truth), len(truth) - sum(truth)))
+            self.plot_figure(matches, confirmed_matches, truth, None)  # first plot
+            queried_points, confirmed_matches, truth, pred_mu, matches = self.update(queried_points, confirmed_matches)
+            self.plot_figure(matches, confirmed_matches, truth, pred_mu)  # final figure
+
+
