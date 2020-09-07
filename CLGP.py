@@ -253,24 +253,27 @@ class SimpleExperiment(object):
                   'incorrect.'.format(len(truth), sum(truth), len(truth) - sum(truth)))
             self.plot_figure(matches, confirmed_matches, truth, None)
             for it in range(self.n_its):
-                queried_points, confirmed_matches = self.update(queried_points, confirmed_matches)
+                queried_points, confirmed_matches, truth, pred_mu, matches = self.update(queried_points,
+                                                                                         confirmed_matches)
+                print('For the figure below, there are now a total of {} matches, of which there are {} confirmed, {} '
+                      'unconfirmed and {} incorrect.'.format(len(truth), len(confirmed_matches), sum(truth) -
+                                                             len(confirmed_matches), len(truth) - sum(truth)))
+                self.plot_figure(matches, confirmed_matches, truth, pred_mu)
 
     def update(self, queried_points, confirmed_matches):
         new_match, queried_points = self.get_new_match(queried_points, confirmed_matches)
         if new_match is not None and new_match not in confirmed_matches:
-            print('The next query resulted in a new confirmed match. The GP has been refitted and the matching updated.')
+            if self.match_method != 'cheat':
+                print('The next query resulted in a new confirmed match. The GP has been refitted and the matching updated.')
             confirmed_matches.append(new_match)
         else:
-            print('The next query did not match anything previously observed.')
+            if self.match_method != 'cheat':
+                print('The next query did not match anything previously observed.')
         pred_mu = fit_and_predict(self.dataset1, self.dataset2, confirmed_matches, self.main_K)
         matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
                                 max_rt=self.max_rt, predictions=pred_mu)
         truth = assess_matches(matches, self.dataset1_idx, self.dataset2_idx)
-        print('For the figure below, there are now a total of {} matches, of which there are {} confirmed, {} '
-              'unconfirmed and {} incorrect.'.format(len(truth), len(confirmed_matches), sum(truth) -
-                                                     len(confirmed_matches), len(truth) - sum(truth)))
-        self.plot_figure(matches, confirmed_matches, truth, pred_mu)
-        return queried_points, confirmed_matches
+        return queried_points, confirmed_matches, truth, pred_mu, matches
 
     def get_new_match(self, queried_points, confirmed_matches):
         unqueried = set(range(len(self.dataset2))) - set(queried_points)
