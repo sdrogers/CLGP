@@ -288,6 +288,8 @@ class SimpleExperiment(object):
                 match_selection = np.array(dist_idx)[np.array(dists).argmax()]
             else:
                 match_selection = random.choices(range(len(dists)), weights=dists)[0]
+        elif self.match_method == 'cheat':
+            match_selection = np.random.choice(list(unqueried))
         else:
             match_selection = np.random.choice(list(unqueried))
         queried_points.append(match_selection)
