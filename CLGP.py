@@ -135,6 +135,15 @@ def closest_match(peaks1, peaks2, confirmed_matches, queried_points, frag_1, max
     return matches
 
 
+def maximum_matches(peaks1, peaks2, confirmed_matches, queried_points, frag_1, max_rt=0.1, predictions=None):
+    matches = copy.deepcopy(confirmed_matches)
+    # get complete list of possible matches
+    # get corrected / uncorrected distances between matches
+    # remove possible matches that are > max_rt
+    # do graphical matching using network X
+    return matches
+
+
 def plot_match(peaks1, peaks2, frag_1, matches, confirmed_matches, relative=True, predictions=None, truth=None):
     # plt.figure()
     if not relative:
