@@ -183,6 +183,8 @@ def plot_match(peaks1, peaks2, frag_1, matches, confirmed_matches, relative=True
             plt.plot([0,peaks2[j]],[peaks1[i],peaks1[i]],'k',color=[0.8,0.8,0.8])
     if predictions is not None:
         plt.plot(peaks2, predictions, c='C0', label='Predicted Drift')
+    else:
+        plt.plot(peaks2, [0 for i in range(len(peaks2))], c='C0', label='Predicted Drift')
     plt.plot([], [], 'go', markersize=15, label='Confirmed Match')
     plt.plot([], [], 'o', c='orange', markersize=7, label='Unconfirmed Match')
     plt.plot([], [], 'ro', markersize=7, label='Incorrect Match')
@@ -292,10 +294,11 @@ class SimpleExperiment(object):
             else:
                 match_selection = random.choices(range(len(dists)), weights=dists)[0]
         elif self.match_method == 'cheat':
-            match_selection = np.random.choice(list(unqueried))
+            frag_data_1 = self.dataset1_idx[np.where(np.array(self.frag_1) == 1)]
+            idx = random.choices(list(set(frag_data_1).intersection(set(self.dataset2_idx))))
+            match_selection = np.where(self.dataset2_idx == idx[0])[0].tolist()[0]
         else:
             match_selection = np.random.choice(list(unqueried))
-        queried_points.append(match_selection)
         new_match = query(self.dataset1_idx, self.dataset2_idx, match_selection, self.frag_1)
         return new_match, queried_points
 
@@ -322,14 +325,65 @@ class ExampleExperiment(SimpleExperiment):
         queried_points = []  # store which points we have queried
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
+            old_matches = closest_match(self.dataset1, self.dataset2, confirmed_matches, queried_points, self.frag_1,
                                     max_rt=self.max_rt, predictions=None)
-            truth = assess_matches(matches, self.dataset1_idx, self.dataset2_idx)
-            print('Initial matches based on no time drift and picking the closest matches.')
-            print('For the figure below, there is a total of {} matches, of which there are {} correct and {} '
-                  'incorrect.'.format(len(truth), sum(truth), len(truth) - sum(truth)))
-            self.plot_figure(matches, confirmed_matches, truth, None)  # first plot
+            old_truth = assess_matches(old_matches, self.dataset1_idx, self.dataset2_idx)
+            print('We start with an initial matching based on a zero mean Gaussian Process prior (blue line - '
+                  'predicted drift) which assumes that there is no time drift between samples, i.e. pairs are matched'
+                  ' based on their unadjusted observed times. Currently there is additional information for some '
+                  'observations in dataset1, but none in dataset2. There are therefore no confirmed matches.')
+            self.plot_figure(old_matches, confirmed_matches, old_truth, None)  # first plot
+            print('We pick a observation to query in dataset2 (highlighted in green on right-hand side). This query '
+                  'gives us the information needed to potentially match that observation to one observed in dataset1.')
             queried_points, confirmed_matches, truth, pred_mu, matches = self.update(queried_points, confirmed_matches)
+            self.plot1(old_matches, confirmed_matches, old_truth, pred_mu)
+            print('We then look for a match in dataset1 based on the new additional information. If there is a match,'
+                  ' then we match these points together and add the matched pair to the training data for the Gaussian'
+                  ' Process drift model.')
+            self.plot2(confirmed_matches, confirmed_matches, truth, pred_mu)
+            print('Based on the updated training data (green point on left-hand side), we refit the Gaussian Process.')
+            self.plot3(confirmed_matches, confirmed_matches, truth, pred_mu)
+            print('Using the updated Gaussian Process to account for the time drift, we then update the matchings.')
             self.plot_figure(matches, confirmed_matches, truth, pred_mu)  # final figure
+            print('We would then pick another unqueried point from dataset2 and repeat the process multiple times.')
 
+    def plot1(self, matches, confirmed_matches, truth, pred_mu):
+        plt.figure(figsize=(15, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(self.true_vals + self.true_offset_function, -self.true_offset_function, 'k', label='True Drift')
+        plot_match(self.dataset1, self.dataset2, self.frag_1, [], [], relative=True,
+                   predictions=None, truth=truth)
+        plt.subplot(1, 2, 2)
+        plot_datasets(self.dataset1, self.dataset2, self.dataset1_idx, self.dataset2_idx, true_matching=False,
+                      matches=[], confirmed_matches=[])
+
+        plt.plot(self.dataset2[confirmed_matches[0][1]], self.dataset2_idx[confirmed_matches[0][1]], 'go',
+                 markersize=10)
+        plt.show()
+
+    def plot2(self, matches, confirmed_matches, truth, pred_mu):
+        plt.figure(figsize=(15, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(self.true_vals + self.true_offset_function, -self.true_offset_function, 'k', label='True Drift')
+        plot_match(self.dataset1, self.dataset2, self.frag_1, matches, confirmed_matches, relative=True,
+                   predictions=None, truth=truth)
+        plt.subplot(1, 2, 2)
+        plot_datasets(self.dataset1, self.dataset2, self.dataset1_idx, self.dataset2_idx, true_matching=False,
+                      matches=confirmed_matches, confirmed_matches=confirmed_matches)
+        plt.plot(self.dataset2[confirmed_matches[0][1]], self.dataset2_idx[confirmed_matches[0][1]], 'go',
+                 markersize=10)
+        plt.show()
+
+    def plot3(self, matches, confirmed_matches, truth, pred_mu):
+        plt.figure(figsize=(15, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(self.true_vals + self.true_offset_function, -self.true_offset_function, 'k', label='True Drift')
+        plt.plot(self.dataset2, pred_mu, c='C0', label='Predicted Drift')
+        plot_match(self.dataset1, self.dataset2, self.frag_1, matches, confirmed_matches, relative=True,
+                   predictions=pred_mu, truth=truth)
+        plt.plot()
+        plt.subplot(1, 2, 2)
+        plot_datasets(self.dataset1, self.dataset2, self.dataset1_idx, self.dataset2_idx, true_matching=False,
+                      matches=confirmed_matches, confirmed_matches=confirmed_matches)
+        plt.show()
 
